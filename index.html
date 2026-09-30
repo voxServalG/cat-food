@@ -241,14 +241,14 @@
     } else {
       setText(elSummary, '');
     }
+
+    saveState();
   }
 
   /* 选中生理状态：填入系数并处理高龄猫建议文字。 */
-  function onStateChange() {
+  function updateSeniorTip() {
     var r = currentRadio();
-    if (!r) return;
-    elCoef.value = r.getAttribute('data-coef');
-    var tip = r.getAttribute('data-tip');
+    var tip = r ? r.getAttribute('data-tip') : null;
     if (tip) {
       setText(elSeniorTip, tip);
       elSeniorTip.classList.remove('hidden');
@@ -256,7 +256,51 @@
       setText(elSeniorTip, '');
       elSeniorTip.classList.add('hidden');
     }
+  }
+
+  function onStateChange() {
+    var r = currentRadio();
+    if (!r) return;
+    elCoef.value = r.getAttribute('data-coef');
+    updateSeniorTip();
     recalc();
+  }
+
+  /* ---- 输入状态持久化（localStorage，纯浏览器本地） ---- */
+  var STORAGE_KEY = 'cat-food-state';
+
+  function saveState() {
+    try {
+      var r = currentRadio();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        state: r ? r.value : '',
+        weight: elWeight.value,
+        coef: elCoef.value,
+        meDry: elMeDry.value,
+        meWet: elMeWet.value,
+        percent: elPercent.value
+      }));
+    } catch (e) { /* 隐私模式等不可写场景直接跳过 */ }
+  }
+
+  function restoreState() {
+    var saved = null;
+    try {
+      saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+    } catch (e) { saved = null; }
+    if (!saved) return;
+    if (saved.state) {
+      var list = document.getElementsByName('state');
+      for (var i = 0; i < list.length; i++) {
+        if (list[i].value === saved.state) { list[i].checked = true; break; }
+      }
+    }
+    if (typeof saved.weight === 'string' && saved.weight !== '') elWeight.value = saved.weight;
+    if (typeof saved.coef === 'string' && saved.coef !== '') elCoef.value = saved.coef;
+    if (typeof saved.meDry === 'string' && saved.meDry !== '') elMeDry.value = saved.meDry;
+    if (typeof saved.meWet === 'string' && saved.meWet !== '') elMeWet.value = saved.meWet;
+    var p = Number(saved.percent);
+    if (isFinite(p)) elPercent.value = Math.max(0, Math.min(100, p));
   }
 
   document.getElementById('state-group').addEventListener('change', onStateChange);
@@ -278,7 +322,11 @@
     recalc();
   });
 
-  onStateChange();
+  /* 启动：先恢复上次输入，再显示提示与结果（不走 onStateChange，避免覆盖已存系数）。 */
+  restoreState();
+  setText(elPercentValue, elPercent.value + '%');
+  updateSeniorTip();
+  recalc();
 })();
 </script>
 </body>
