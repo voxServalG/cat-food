@@ -67,8 +67,8 @@
     <label class="radio-line"><input type="radio" name="state" value="neutered" data-coef="1.2">绝育成猫</label>
     <label class="radio-line"><input type="radio" name="state" value="inactive" data-coef="1.0">不活泼或肥胖倾向</label>
     <label class="radio-line"><input type="radio" name="state" value="weightloss" data-coef="0.8">需要减肥的成猫</label>
-    <label class="radio-line"><input type="radio" name="state" value="senior711" data-coef="1.25" data-tip="7~11 岁高龄猫的系数为区间 1.1~1.4：活动量偏少取下限，偏多取上限。此处已填入中值 1.25，可直接修改。">高龄猫，7~11 岁</label>
-    <label class="radio-line"><input type="radio" name="state" value="senior11" data-coef="1.35" data-tip="11 岁以上高龄猫的系数为区间 1.1~1.6：活动量偏少取下限，偏多取上限。此处已填入中值 1.35，可直接修改。">高龄猫，11 岁以上</label>
+    <label class="radio-line"><input type="radio" name="state" value="senior711" data-coef="1.25" data-tip="7~11 岁高龄猫的能量系数为区间 1.1~1.4：活动量偏少的猫，系数可适当取小一些；活动量偏多的猫，可适当取大一些。">高龄猫，7~11 岁</label>
+    <label class="radio-line"><input type="radio" name="state" value="senior11" data-coef="1.35" data-tip="11 岁以上高龄猫的能量系数为区间 1.1~1.6：活动量偏少的猫，系数可适当取小一些；活动量偏多的猫，可适当取大一些。">高龄猫，11 岁以上</label>
   </div>
   <p class="tip small hidden" id="senior-tip"></p>
   <p>
@@ -92,14 +92,9 @@
     <span class="err" id="err-me-wet"></span>
   </p>
   <p>
-    <label><input type="checkbox" id="chk-dry"> 喂干粮</label>
-    &nbsp;&nbsp;
-    <label><input type="checkbox" id="chk-wet"> 喂湿粮</label>
-  </p>
-  <p id="row-percent" class="hidden">
-    <label for="percent">干粮供能占比（%，其余由湿粮提供）：</label>
-    <input type="number" id="percent" step="5" min="0" max="100" value="50" autocomplete="off">
-    <span class="err" id="err-percent"></span>
+    <label for="percent">干粮供能占比（%）：</label>
+    <input type="range" id="percent" min="0" max="100" step="1" value="50">
+    <span id="percent-value">50%</span>
   </p>
 </fieldset>
 
@@ -124,7 +119,7 @@
       <td>全喂湿粮</td>
       <td class="num"><span id="out-wet">—</span> g</td>
     </tr>
-    <tr id="row-mixed" class="hidden">
+    <tr id="row-mixed">
       <td>混合喂养</td>
       <td class="num">干粮 <span id="out-mixed-dry">—</span> g ＋ 湿粮 <span id="out-mixed-wet">—</span> g</td>
     </tr>
@@ -148,12 +143,11 @@
   function $(id) { return document.getElementById(id); }
 
   var elWeight = $('weight'), elCoef = $('coef');
-  var elMeDry = $('me-dry'), elMeWet = $('me-wet');
-  var elChkDry = $('chk-dry'), elChkWet = $('chk-wet'), elPercent = $('percent');
+  var elMeDry = $('me-dry'), elMeWet = $('me-wet'), elPercent = $('percent');
   var elErrWeight = $('err-weight'), elErrCoef = $('err-coef'), elWarnCoef = $('warn-coef');
-  var elErrMeDry = $('err-me-dry'), elErrMeWet = $('err-me-wet'), elErrPercent = $('err-percent');
+  var elErrMeDry = $('err-me-dry'), elErrMeWet = $('err-me-wet');
+  var elPercentValue = $('percent-value');
   var elSeniorTip = $('senior-tip');
-  var elRowPercent = $('row-percent'), elRowMixed = $('row-mixed');
   var elSummary = $('summary');
   var out = { rer: $('out-rer'), der: $('out-der'), dry: $('out-dry'), wet: $('out-wet'),
               mixedDry: $('out-mixed-dry'), mixedWet: $('out-mixed-wet') };
@@ -174,16 +168,11 @@
     return null;
   }
 
-  /* 校验某个 ME：勾选了对应粮食或已填写内容时才要求合法。返回 {active, res}。 */
-  function checkME(elInput, elErr, checked, label) {
-    var filled = elInput.value.trim() !== '';
-    if (!filled && !checked) {
+  /* 校验某个 ME：填了就校验，没填视为未设置（对应结果行显示 —）。 */
+  function checkME(elInput, elErr, label) {
+    if (elInput.value.trim() === '') {
       setText(elErr, '');
       return { active: false, res: null };
-    }
-    if (!filled && checked) {
-      setText(elErr, '已勾选' + label + '，请填写其代谢能');
-      return { active: true, res: { ok: false, value: NaN } };
     }
     var res = C.validateME(elInput.value, label + '代谢能');
     setText(elErr, res.ok ? '' : res.message);
@@ -208,24 +197,12 @@
     setText(elWarnCoef, rc.ok ? rc.warn : '');
     if (!rc.ok) errors.push(rc.message);
 
-    var dry = checkME(elMeDry, elErrMeDry, elChkDry.checked, '干粮');
-    if (!dry.active) dry = { active: false, res: null };
-    if (dry.active && !dry.res.ok) errors.push(dry.res.message || '干粮代谢能有误');
-    var wet = checkME(elMeWet, elErrMeWet, elChkWet.checked, '湿粮');
-    if (wet.active && !wet.res.ok) errors.push(wet.res.message || '湿粮代谢能有误');
+    var dry = checkME(elMeDry, elErrMeDry, '干粮');
+    if (dry.active && !dry.res.ok) errors.push(dry.res.message);
+    var wet = checkME(elMeWet, elErrMeWet, '湿粮');
+    if (wet.active && !wet.res.ok) errors.push(wet.res.message);
 
-    var mixed = elChkDry.checked && elChkWet.checked;
-    elRowPercent.classList.toggle('hidden', !mixed);
-    elRowMixed.classList.toggle('hidden', !mixed);
-
-    var rp = null;
-    if (mixed) {
-      rp = C.validatePercent(elPercent.value);
-      setText(elErrPercent, rp.ok ? '' : rp.message);
-      if (!rp.ok) errors.push(rp.message);
-    } else {
-      setText(elErrPercent, '');
-    }
+    var rp = C.validatePercent(elPercent.value);
 
     /* RER / DER：体重与系数合法即可算。 */
     var rer = null, der = null;
@@ -243,17 +220,15 @@
     setText(out.dry, (der !== null && dry.active && dry.res.ok) ? fmt(C.calcGrams(der, dry.res.value)) : '—');
     setText(out.wet, (der !== null && wet.active && wet.res.ok) ? fmt(C.calcGrams(der, wet.res.value)) : '—');
 
-    /* 混合喂养：所有相关输入合法才显示数值。 */
-    if (mixed) {
-      var ready = der !== null && dry.active && dry.res.ok && wet.active && wet.res.ok && rp.ok;
-      if (ready) {
-        var m = C.calcMixed(der, dry.res.value, wet.res.value, rp.value);
-        setText(out.mixedDry, fmt(m.dry));
-        setText(out.mixedWet, fmt(m.wet));
-      } else {
-        setText(out.mixedDry, '—');
-        setText(out.mixedWet, '—');
-      }
+    /* 混合喂养行常驻：两种 ME 都有效即可算。 */
+    var ready = der !== null && dry.active && dry.res.ok && wet.active && wet.res.ok && rp.ok;
+    if (ready) {
+      var m = C.calcMixed(der, dry.res.value, wet.res.value, rp.value);
+      setText(out.mixedDry, fmt(m.dry));
+      setText(out.mixedWet, fmt(m.wet));
+    } else {
+      setText(out.mixedDry, '—');
+      setText(out.mixedWet, '—');
     }
 
     /* 汇总提示。 */
@@ -284,8 +259,10 @@
 
   document.getElementById('state-group').addEventListener('change', onStateChange);
   document.addEventListener('input', recalc);
-  document.addEventListener('change', function (e) {
-    if (e.target === elChkDry || e.target === elChkWet) recalc();
+  /* 滑动条：实时显示百分数并重算。 */
+  elPercent.addEventListener('input', function () {
+    setText(elPercentValue, elPercent.value + '%');
+    recalc();
   });
   /* 位数超限静默归整：体重失焦归到三位小数，系数失焦归到两位小数，不弹提示。 */
   elWeight.addEventListener('blur', function () {
