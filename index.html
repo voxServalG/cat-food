@@ -28,7 +28,10 @@
   legend { font-weight: bold; padding: 0 6px; }
   .radio-line { display: block; margin: 2px 0; }
   input[type="number"] { width: 7em; }
-  table { border-collapse: collapse; width: 100%; margin: 0.5em 0; }
+  /* 滑动条独占一行，撑满外框内容区 */
+  input[type="range"] { display: block; width: 100%; margin: 2px 0 10px; }
+  /* 表格固定列宽：数值变化时中线不跳动 */
+  table { border-collapse: collapse; table-layout: fixed; width: 100%; margin: 0.5em 0; }
   th, td { border: 1px solid #000000; padding: 4px 8px; text-align: left; vertical-align: top; }
   th { background: #e0e0e0; font-weight: bold; }
   td.num { text-align: right; white-space: nowrap; }
@@ -92,9 +95,8 @@
     <span class="err" id="err-me-wet"></span>
   </p>
   <p>
-    <label for="percent">干粮供能占比（%）：</label>
+    <label for="percent">干粮供能占比（%）：<span id="percent-value">50%</span></label>
     <input type="range" id="percent" min="0" max="100" step="1" value="50">
-    <span id="percent-value">50%</span>
   </p>
 </fieldset>
 
@@ -102,7 +104,7 @@
   <legend>三、计算结果</legend>
   <p class="summary err" id="summary"></p>
   <table>
-    <tr><th style="width:55%">项目</th><th>数值</th></tr>
+    <tr><th style="width:40%">项目</th><th>数值</th></tr>
     <tr>
       <td>RER</td>
       <td class="num"><span id="out-rer">—</span> kcal</td>
