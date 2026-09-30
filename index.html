@@ -51,6 +51,9 @@
     fieldset { padding: 6px 8px 10px; }
     input[type="number"] { width: 6em; }
     th, td { padding: 3px 5px; }
+    /* 混合喂养行在 320px 宽度起也要单行放下 */
+    #row-mixed td.num { font-size: 15px; }
+    .num-slot { width: 4.5ch; }
   }
 </style>
 </head>
@@ -126,7 +129,7 @@
     </tr>
     <tr id="row-mixed">
       <td>混合喂养</td>
-      <td class="num">干粮 <span class="num-slot" id="out-mixed-dry">—</span> g ＋ 湿粮 <span class="num-slot" id="out-mixed-wet">—</span> g</td>
+      <td class="num">干粮 <span class="num-slot" id="out-mixed-dry">—</span> g＋湿粮 <span class="num-slot" id="out-mixed-wet">—</span> g</td>
     </tr>
   </table>
 </fieldset>
