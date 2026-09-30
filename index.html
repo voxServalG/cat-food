@@ -32,9 +32,9 @@
   input[type="range"] { display: block; width: 100%; margin: 2px 0 10px; }
   /* 表格固定列宽：数值变化时中线不跳动 */
   table { border-collapse: collapse; table-layout: fixed; width: 100%; margin: 0.5em 0; }
-  th, td { border: 1px solid #000000; padding: 4px 8px; text-align: left; vertical-align: top; }
+  th, td { border: 1px solid #000000; padding: 4px 8px; text-align: left; vertical-align: top; overflow-wrap: break-word; }
   th { background: #e0e0e0; font-weight: bold; }
-  td.num { text-align: right; white-space: nowrap; }
+  td.num { text-align: right; }
   .err { color: #ff0000; }
   .warn { color: #cc6600; }
   .small { font-size: 0.85em; }
@@ -104,7 +104,7 @@
   <legend>三、计算结果</legend>
   <p class="summary err" id="summary"></p>
   <table>
-    <tr><th style="width:40%">项目</th><th>数值</th></tr>
+    <tr><th style="width:30%">项目</th><th>数值</th></tr>
     <tr>
       <td>RER</td>
       <td class="num"><span id="out-rer">—</span> kcal</td>
