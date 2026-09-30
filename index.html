@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>小猫喂食量计算器</title>
+<style>
+  body {
+    background: #ffffff;
+    color: #000000;
+    font-family: "Times New Roman", "SimSun", "宋体", serif;
+    font-size: 16px;
+    line-height: 1.7;
+    max-width: 640px;
+    margin: 1.5em auto;
+    padding: 0 16px;
+  }
+  /* 表单控件默认用系统字体，须显式继承；字号不小于 16px，避免 iOS 聚焦缩放 */
+  input {
+    font-family: inherit;
+    font-size: 100%;
+  }
+  th, td { overflow-wrap: break-word; }
+  h1 { font-size: 1.5em; text-align: center; margin: 0.3em 0; }
+  .subtitle { text-align: center; font-size: 0.9em; margin: 0 0 0.8em; }
+  hr { border: none; border-top: 1px solid #000000; }
+  fieldset { border: 1px solid #808080; margin: 1em 0; padding: 8px 14px 12px; }
+  legend { font-weight: bold; padding: 0 6px; }
+  .radio-line { display: block; margin: 2px 0; }
+  input[type="number"] { width: 7em; }
+  table { border-collapse: collapse; width: 100%; margin: 0.5em 0; }
+  th, td { border: 1px solid #000000; padding: 4px 8px; text-align: left; vertical-align: top; }
+  th { background: #e0e0e0; font-weight: bold; }
+  td.num { text-align: right; white-space: nowrap; }
+  .err { color: #ff0000; }
+  .warn { color: #cc6600; }
+  .small { font-size: 0.85em; }
+  .tip { border: 1px dashed #808080; padding: 6px 10px; margin: 6px 0; }
+  .summary { min-height: 1.5em; margin: 0.3em 0; }
+  .hidden { display: none; }
+  .footer { margin-top: 1.2em; }
+  /* 窄屏（手机）：收紧留白，表格改为占满整行 */
+  @media (max-width: 480px) {
+    body { margin: 0.5em auto; padding: 0 10px; }
+    fieldset { padding: 6px 8px 10px; }
+    input[type="number"] { width: 6em; }
+    th, td { padding: 3px 5px; }
+  }
+</style>
+</head>
+<body>
+
+<h1>小猫喂食量计算器</h1>
+<hr>
+
+<fieldset>
+  <legend>一、基本信息</legend>
+  <p>
+    <label for="weight">体重（kg）：</label>
+    <input type="number" id="weight" step="0.05" min="0" placeholder="如 1.2" autocomplete="off">
+    <span class="err" id="err-weight"></span>
+  </p>
+  <p>生理状态：</p>
+  <div id="state-group">
+    <label class="radio-line"><input type="radio" name="state" value="kitten" data-coef="2.5" checked>幼猫</label>
+    <label class="radio-line"><input type="radio" name="state" value="intact" data-coef="1.4">未绝育成猫</label>
+    <label class="radio-line"><input type="radio" name="state" value="neutered" data-coef="1.2">绝育成猫</label>
+    <label class="radio-line"><input type="radio" name="state" value="inactive" data-coef="1.0">不活泼或肥胖倾向</label>
+    <label class="radio-line"><input type="radio" name="state" value="weightloss" data-coef="0.8">需要减肥的成猫</label>
+    <label class="radio-line"><input type="radio" name="state" value="senior711" data-coef="1.25" data-tip="7~11 岁高龄猫的系数为区间 1.1~1.4：活动量偏少取下限，偏多取上限。此处已填入中值 1.25，可直接修改。">高龄猫，7~11 岁</label>
+    <label class="radio-line"><input type="radio" name="state" value="senior11" data-coef="1.35" data-tip="11 岁以上高龄猫的系数为区间 1.1~1.6：活动量偏少取下限，偏多取上限。此处已填入中值 1.35，可直接修改。">高龄猫，11 岁以上</label>
+  </div>
+  <p class="tip small hidden" id="senior-tip"></p>
+  <p>
+    <label for="coef">能量系数：</label>
+    <input type="number" id="coef" step="0.01" min="0" value="2.5" autocomplete="off">
+    <span class="err" id="err-coef"></span>
+    <span class="warn small" id="warn-coef"></span>
+  </p>
+</fieldset>
+
+<fieldset>
+  <legend>二、粮食设置</legend>
+  <p>
+    <label for="me-dry">干粮 ME：</label>
+    <input type="number" id="me-dry" step="1" min="0" placeholder="如 400" autocomplete="off"> kcal/100g
+    <span class="err" id="err-me-dry"></span>
+  </p>
+  <p>
+    <label for="me-wet">湿粮 ME：</label>
+    <input type="number" id="me-wet" step="1" min="0" placeholder="如 80" autocomplete="off"> kcal/100g
+    <span class="err" id="err-me-wet"></span>
+  </p>
+  <p>
+    <label><input type="checkbox" id="chk-dry"> 喂干粮</label>
+    &nbsp;&nbsp;
+    <label><input type="checkbox" id="chk-wet"> 喂湿粮</label>
+  </p>
+  <p id="row-percent" class="hidden">
+    <label for="percent">干粮供能占比（%，其余由湿粮提供）：</label>
+    <input type="number" id="percent" step="5" min="0" max="100" value="50" autocomplete="off">
+    <span class="err" id="err-percent"></span>
+  </p>
+</fieldset>
+
+<fieldset>
+  <legend>三、计算结果</legend>
+  <p class="summary err" id="summary"></p>
+  <table>
+    <tr><th style="width:55%">项目</th><th>数值</th></tr>
+    <tr>
+      <td>RER</td>
+      <td class="num"><span id="out-rer">—</span> kcal</td>
+    </tr>
+    <tr>
+      <td>DER</td>
+      <td class="num"><span id="out-der">—</span> kcal</td>
+    </tr>
+    <tr>
+      <td>全喂干粮</td>
+      <td class="num"><span id="out-dry">—</span> g</td>
+    </tr>
+    <tr>
+      <td>全喂湿粮</td>
+      <td class="num"><span id="out-wet">—</span> g</td>
+    </tr>
+    <tr id="row-mixed" class="hidden">
+      <td>混合喂养</td>
+      <td class="num">干粮 <span id="out-mixed-dry">—</span> g ＋ 湿粮 <span id="out-mixed-wet">—</span> g</td>
+    </tr>
+  </table>
+</fieldset>
+
+<hr>
+<div class="footer small">
+  <p>计算方法：RER = 70 × 体重(kg)<sup>0.75</sup>；DER = RER × 能量系数；喂食量(g) = DER ÷ ME × 100。</p>
+  <p>其中 RER 为静息能量需求（Resting Energy Requirement），DER 为每日能量需求（Daily Energy Requirement），ME 为代谢能（Metabolizable Energy，kcal/100g，以包装标注为准）。</p>
+  <p>能量系数参考：幼猫 2.5；未绝育成猫 1.4；绝育成猫 1.2；不活泼或肥胖倾向 1.0；需要减肥的成猫 0.8；高龄猫 7~11 岁 1.1~1.4、11 岁以上 1.1~1.6。</p>
+  <p>本页计算结果仅供参考，具体喂食量请以兽医建议为准。</p>
+</div>
+
+<script src="calc.js"></script>
+<script>
+(function () {
+  'use strict';
+  var C = window.CatFoodCalc;
+
+  function $(id) { return document.getElementById(id); }
+
+  var elWeight = $('weight'), elCoef = $('coef');
+  var elMeDry = $('me-dry'), elMeWet = $('me-wet');
+  var elChkDry = $('chk-dry'), elChkWet = $('chk-wet'), elPercent = $('percent');
+  var elErrWeight = $('err-weight'), elErrCoef = $('err-coef'), elWarnCoef = $('warn-coef');
+  var elErrMeDry = $('err-me-dry'), elErrMeWet = $('err-me-wet'), elErrPercent = $('err-percent');
+  var elSeniorTip = $('senior-tip');
+  var elRowPercent = $('row-percent'), elRowMixed = $('row-mixed');
+  var elSummary = $('summary');
+  var out = { rer: $('out-rer'), der: $('out-der'), dry: $('out-dry'), wet: $('out-wet'),
+              mixedDry: $('out-mixed-dry'), mixedWet: $('out-mixed-wet') };
+
+  function setText(el, text) { el.textContent = text; }
+
+  /* 显示保留 1 位小数，整数不带小数点。 */
+  function fmt(n) {
+    var r = Math.round(n * 10) / 10;
+    return String(r);
+  }
+
+  function currentRadio() {
+    var list = document.getElementsByName('state');
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].checked) return list[i];
+    }
+    return null;
+  }
+
+  /* 校验某个 ME：勾选了对应粮食或已填写内容时才要求合法。返回 {active, res}。 */
+  function checkME(elInput, elErr, checked, label) {
+    var filled = elInput.value.trim() !== '';
+    if (!filled && !checked) {
+      setText(elErr, '');
+      return { active: false, res: null };
+    }
+    if (!filled && checked) {
+      setText(elErr, '已勾选' + label + '，请填写其代谢能');
+      return { active: true, res: { ok: false, value: NaN } };
+    }
+    var res = C.validateME(elInput.value, label + '代谢能');
+    setText(elErr, res.ok ? '' : res.message);
+    return { active: true, res: res };
+  }
+
+  function recalc() {
+    var errors = [];
+
+    var rw = C.validateWeight(elWeight.value);
+    /* 空体重视为“未填写”，不算填错：不标红，只在汇总行提示。 */
+    if (elWeight.value.trim() === '') {
+      rw = { ok: false, value: NaN, message: '' };
+      setText(elErrWeight, '');
+    } else {
+      setText(elErrWeight, rw.ok ? '' : rw.message);
+      if (!rw.ok) errors.push(rw.message);
+    }
+
+    var rc = C.validateCoefficient(elCoef.value);
+    setText(elErrCoef, rc.ok ? '' : rc.message);
+    setText(elWarnCoef, rc.ok ? rc.warn : '');
+    if (!rc.ok) errors.push(rc.message);
+
+    var dry = checkME(elMeDry, elErrMeDry, elChkDry.checked, '干粮');
+    if (!dry.active) dry = { active: false, res: null };
+    if (dry.active && !dry.res.ok) errors.push(dry.res.message || '干粮代谢能有误');
+    var wet = checkME(elMeWet, elErrMeWet, elChkWet.checked, '湿粮');
+    if (wet.active && !wet.res.ok) errors.push(wet.res.message || '湿粮代谢能有误');
+
+    var mixed = elChkDry.checked && elChkWet.checked;
+    elRowPercent.classList.toggle('hidden', !mixed);
+    elRowMixed.classList.toggle('hidden', !mixed);
+
+    var rp = null;
+    if (mixed) {
+      rp = C.validatePercent(elPercent.value);
+      setText(elErrPercent, rp.ok ? '' : rp.message);
+      if (!rp.ok) errors.push(rp.message);
+    } else {
+      setText(elErrPercent, '');
+    }
+
+    /* RER / DER：体重与系数合法即可算。 */
+    var rer = null, der = null;
+    if (rw.ok && rc.ok) {
+      rer = C.calcRER(rw.value);
+      der = C.calcDER(rer, rc.value);
+      setText(out.rer, fmt(rer));
+      setText(out.der, fmt(der));
+    } else {
+      setText(out.rer, '—');
+      setText(out.der, '—');
+    }
+
+    /* 全喂干粮 / 全喂湿粮：对应 ME 有效即显示。 */
+    setText(out.dry, (der !== null && dry.active && dry.res.ok) ? fmt(C.calcGrams(der, dry.res.value)) : '—');
+    setText(out.wet, (der !== null && wet.active && wet.res.ok) ? fmt(C.calcGrams(der, wet.res.value)) : '—');
+
+    /* 混合喂养：所有相关输入合法才显示数值。 */
+    if (mixed) {
+      var ready = der !== null && dry.active && dry.res.ok && wet.active && wet.res.ok && rp.ok;
+      if (ready) {
+        var m = C.calcMixed(der, dry.res.value, wet.res.value, rp.value);
+        setText(out.mixedDry, fmt(m.dry));
+        setText(out.mixedWet, fmt(m.wet));
+      } else {
+        setText(out.mixedDry, '—');
+        setText(out.mixedWet, '—');
+      }
+    }
+
+    /* 汇总提示。 */
+    if (errors.length > 0) {
+      setText(elSummary, '请先修正标红的输入项（共 ' + errors.length + ' 处）。');
+    } else if (elWeight.value.trim() === '') {
+      setText(elSummary, '请填写体重后查看结果。');
+    } else {
+      setText(elSummary, '');
+    }
+  }
+
+  /* 选中生理状态：填入系数并处理高龄猫建议文字。 */
+  function onStateChange() {
+    var r = currentRadio();
+    if (!r) return;
+    elCoef.value = r.getAttribute('data-coef');
+    var tip = r.getAttribute('data-tip');
+    if (tip) {
+      setText(elSeniorTip, tip);
+      elSeniorTip.classList.remove('hidden');
+    } else {
+      setText(elSeniorTip, '');
+      elSeniorTip.classList.add('hidden');
+    }
+    recalc();
+  }
+
+  document.getElementById('state-group').addEventListener('change', onStateChange);
+  document.addEventListener('input', recalc);
+  document.addEventListener('change', function (e) {
+    if (e.target === elChkDry || e.target === elChkWet) recalc();
+  });
+  /* 位数超限静默归整：体重失焦归到三位小数，系数失焦归到两位小数，不弹提示。 */
+  elWeight.addEventListener('blur', function () {
+    var r = C.validateWeight(elWeight.value);
+    if (r.ok) elWeight.value = C.roundWeight(r.value);
+    recalc();
+  });
+  elCoef.addEventListener('blur', function () {
+    var r = C.validateCoefficient(elCoef.value);
+    if (r.ok) elCoef.value = C.roundCoefficient(r.value);
+    recalc();
+  });
+
+  onStateChange();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+# macOS
+.DS_Store
+
+# ZCode 会话文件
+.zcode/
