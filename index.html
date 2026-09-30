@@ -35,8 +35,9 @@
   th, td { border: 1px solid #000000; padding: 4px 8px; text-align: left; vertical-align: top; overflow-wrap: break-word; }
   th { background: #e0e0e0; font-weight: bold; }
   td.num { text-align: right; }
-  /* 数字固定槽位：数值变化时其余文字位置不动 */
-  .num-slot { display: inline-block; width: 4.5em; text-align: right; }
+  /* 数字固定槽位：按实际取值范围（三位数带一位小数）定宽，数值变化时其余文字位置不动 */
+  #row-mixed td.num { white-space: nowrap; }
+  .num-slot { display: inline-block; width: 5ch; text-align: right; }
   .err { color: #ff0000; }
   .warn { color: #cc6600; }
   .small { font-size: 0.85em; }
@@ -50,7 +51,6 @@
     fieldset { padding: 6px 8px 10px; }
     input[type="number"] { width: 6em; }
     th, td { padding: 3px 5px; }
-    .num-slot { width: 3.2em; }
   }
 </style>
 </head>
