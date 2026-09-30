@@ -35,7 +35,7 @@
   .err { color: #ff0000; }
   .warn { color: #cc6600; }
   .small { font-size: 0.85em; }
-  .tip { border: 1px dashed #808080; padding: 6px 10px; margin: 6px 0; }
+  .tip { border: 1px dashed #808080; padding: 6px 10px; margin: 6px 0; white-space: pre-line; }
   .summary { min-height: 1.5em; margin: 0.3em 0; }
   .hidden { display: none; }
   .footer { margin-top: 1.2em; }
@@ -67,8 +67,8 @@
     <label class="radio-line"><input type="radio" name="state" value="neutered" data-coef="1.2">绝育成猫</label>
     <label class="radio-line"><input type="radio" name="state" value="inactive" data-coef="1.0">不活泼或肥胖倾向</label>
     <label class="radio-line"><input type="radio" name="state" value="weightloss" data-coef="0.8">需要减肥的成猫</label>
-    <label class="radio-line"><input type="radio" name="state" value="senior711" data-coef="1.25" data-tip="7~11 岁高龄猫的能量系数为区间 1.1~1.4：活动量偏少的猫，系数可适当取小一些；活动量偏多的猫，可适当取大一些。">高龄猫，7~11 岁</label>
-    <label class="radio-line"><input type="radio" name="state" value="senior11" data-coef="1.35" data-tip="11 岁以上高龄猫的能量系数为区间 1.1~1.6：活动量偏少的猫，系数可适当取小一些；活动量偏多的猫，可适当取大一些。">高龄猫，11 岁以上</label>
+    <label class="radio-line"><input type="radio" name="state" value="senior711" data-coef="1.25" data-tip="系数：1.1~1.4&#10;活动量偏少可以取小一些&#10;活动量偏多可以取大一些">高龄猫，7~11 岁</label>
+    <label class="radio-line"><input type="radio" name="state" value="senior11" data-coef="1.35" data-tip="系数：1.1~1.6&#10;活动量偏少可以取小一些&#10;活动量偏多可以取大一些">高龄猫，11 岁以上</label>
   </div>
   <p class="tip small hidden" id="senior-tip"></p>
   <p>
