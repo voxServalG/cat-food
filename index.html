@@ -35,6 +35,8 @@
   th, td { border: 1px solid #000000; padding: 4px 8px; text-align: left; vertical-align: top; overflow-wrap: break-word; }
   th { background: #e0e0e0; font-weight: bold; }
   td.num { text-align: right; }
+  /* 数字固定槽位：数值变化时其余文字位置不动 */
+  .num-slot { display: inline-block; width: 4.5em; text-align: right; }
   .err { color: #ff0000; }
   .warn { color: #cc6600; }
   .small { font-size: 0.85em; }
@@ -48,6 +50,7 @@
     fieldset { padding: 6px 8px 10px; }
     input[type="number"] { width: 6em; }
     th, td { padding: 3px 5px; }
+    .num-slot { width: 3.2em; }
   }
 </style>
 </head>
@@ -123,7 +126,7 @@
     </tr>
     <tr id="row-mixed">
       <td>混合喂养</td>
-      <td class="num">干粮 <span id="out-mixed-dry">—</span> g ＋ 湿粮 <span id="out-mixed-wet">—</span> g</td>
+      <td class="num">干粮 <span class="num-slot" id="out-mixed-dry">—</span> g ＋ 湿粮 <span class="num-slot" id="out-mixed-wet">—</span> g</td>
     </tr>
   </table>
 </fieldset>
